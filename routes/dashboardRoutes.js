@@ -1,17 +1,10 @@
 const express = require("express");
-const { register, login } = require("../controllers/authController");
-const { verifyToken } = require("../middlewares/authMiddleware");
+const { getUserProfile } = require("../controllers/userController");
+const verifyToken = require("../middlewares/authMiddleware");
+
 const router = express.Router();
 
-// Pendaftaran dan Login
-router.post("/register", register);
-router.post("/login", login);
-
-// Rute untuk halaman dashboard yang memerlukan autentikasi
-router.get("/dashboard", verifyToken, (req, res) => {
-  res
-    .status(200)
-    .json({ message: "Welcome to your dashboard", user: req.user });
-});
+// Route untuk mendapatkan profil pengguna, hanya bisa diakses jika token valid
+router.get("/profile", verifyToken, getUserProfile);
 
 module.exports = router;

@@ -3,6 +3,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const sequelize = require("./config/database");
 const authRoutes = require("./routes/authRoutes");
+const dashRoutes = require("./routes/dashboardRoutes");
 
 dotenv.config();
 
@@ -12,6 +13,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/user", dashRoutes);
 
 // Sinkronisasi database
 sequelize.sync({ force: false }).then(() => {
