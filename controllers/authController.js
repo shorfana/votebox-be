@@ -1,16 +1,25 @@
+const crypto = require("crypto");
 const { generateToken } = require("../config/jwtConfig");
 const Voter = require("../models/Voter");
 
-const register = async (req, res) => {
-  const { principalid, email } = req.body;
+// Fungsi hashing kombinasi SHA-1 dan MD5
+const hashPassword = (password) => {
+  const sha1Hash = crypto.createHash("sha1").update(password).digest("hex");
+  const md5Hash = crypto.createHash("md5").update(sha1Hash).digest("hex");
+  return md5Hash;
+};
 
-  if (!principalid || !email) {
+const register = async (req, res) => {
+  const { principalid, email, password } = req.body;
+
+  if (!principalid || !email || !password) {
     return res
       .status(400)
-      .json({ message: "Principal ID and email are required!" });
+      .json({ message: "Principal ID, email, and password are required!" });
   }
 
   try {
+    // Periksa apakah principalid sudah terdaftar
     let voter = await Voter.findOne({ where: { principalid } });
 
     if (voter) {
@@ -19,8 +28,17 @@ const register = async (req, res) => {
         .json({ message: "Principal ID already registered!" });
     }
 
-    voter = await Voter.create({ principalid, email });
+    // Hash password menggunakan SHA-1 lalu MD5
+    const hashedPassword = hashPassword(password);
 
+    // Buat pengguna baru
+    voter = await Voter.create({
+      principalid,
+      email,
+      password: hashedPassword,
+    });
+
+    // Generate token untuk pengguna baru
     const token = generateToken({
       principalid: voter.principalid,
       email: voter.email,
@@ -31,24 +49,32 @@ const register = async (req, res) => {
       token,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error!", error });
+    return res.status(500).json({ message: "Server error!", error });
   }
 };
 
 const login = async (req, res) => {
-  const { email } = req.body;
+  const { email, password } = req.body;
 
-  if (!email) {
-    return res.status(400).json({ message: "Email is required!" });
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required!" });
   }
 
   try {
+    // Cari pengguna berdasarkan email
     let voter = await Voter.findOne({ where: { email } });
 
     if (!voter) {
       return res.status(404).json({ message: "User not found!" });
     }
 
+    // Hash password yang dimasukkan dan cocokkan dengan yang di database
+    const hashedPassword = hashPassword(password);
+    if (voter.password !== hashedPassword) {
+      return res.status(401).json({ message: "Invalid password!" });
+    }
+
+    // Generate token untuk login
     const token = generateToken({
       principalid: voter.principalid,
       email: voter.email,
@@ -59,7 +85,7 @@ const login = async (req, res) => {
       token,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error!", error });
+    return res.status(500).json({ message: "Server error!", error });
   }
 };
 

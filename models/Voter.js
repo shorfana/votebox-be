@@ -19,6 +19,10 @@ const Voter = sequelize.define(
       allowNull: false,
       unique: true,
     },
+    password: {
+      type: DataTypes.STRING, // Simpan hash password, jadi tipe string sudah cukup
+      allowNull: false, // Kolom ini wajib diisi
+    },
     createdat: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
