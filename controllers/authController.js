@@ -10,12 +10,15 @@ const hashPassword = (password) => {
 };
 
 const register = async (req, res) => {
-  const { principalid, email, password } = req.body;
+  const { principalid, email, password, fullname } = req.body;
 
-  if (!principalid || !email || !password) {
+  // Validasi input
+  if (!principalid || !email || !password || !fullname) {
     return res
       .status(400)
-      .json({ message: "Principal ID, email, and password are required!" });
+      .json({
+        message: "Principal ID, email, password, and fullname are required!",
+      });
   }
 
   try {
@@ -36,6 +39,7 @@ const register = async (req, res) => {
       principalid,
       email,
       password: hashedPassword,
+      fullname, // Tambahkan fullname ke dalam database
     });
 
     // Generate token untuk pengguna baru
